@@ -1,6 +1,57 @@
 import React, { useState, useEffect, useRef } from "react";
+import styled from "styled-components";
 import Food from "../components/Food.js";
 import Snake from "../components/Snake.js";
+import firebase from "../firebase/firebaseConfig";
+import { submitScores } from "../helpers/scores";
+
+const MainContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const LeaderBoard = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 400px;
+`;
+
+const GameContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+const BlankBlock = styled.div`
+  background-color: #435560;
+  width: 30px;
+  height: 30px;
+`;
+
+const PlayerInformationContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  margin: 8px;
+  border: 1px solid gray;
+`;
+
+const PlayerName = styled.h1`
+  font-size: 20px;
+  font-family: sans-serif;
+  padding-right: 5px;
+`;
+
+const PlayerHighScore = styled.p`
+  font-size: 18px;
+  font-family: sans-serif;
+`;
 
 const width = 18;
 const height = 18;
@@ -29,20 +80,55 @@ const SnakeBoard = () => {
   ]);
   const [direction, setDirection] = useState("right");
   const [food, setFood] = useState(randomPosition);
+  const [players, setPlayers] = useState([]);
+  const [username, setUsername] = useState(
+    localStorage.getItem("userNameUser")
+  );
+
+  useEffect(() => {
+    if (!localStorage.getItem("userNameUser")) {
+      const userNameUser = prompt("Please enter your username: ");
+      localStorage.setItem("userNameUser", userNameUser);
+      window.location.reload();
+    }
+
+    firebase
+      .database()
+      .ref("scores")
+      .limitToLast(11)
+      .on("value", (snapchot) => {
+        setPlayers([]);
+        snapchot.forEach((childSnapchot) => {
+          setPlayers((previousArr) => [...previousArr, childSnapchot.val()]);
+        });
+      });
+  }, []);
+
+  useEffect(() => {
+    submitScores(snake.length, username);
+  }, [snake.length]);
 
   onkeydown = (e) => {
     switch (e.keyCode) {
       case 37:
-        setDirection("left");
+        if (direction !== "right") {
+          setDirection("left");
+        }
         break;
       case 38:
-        setDirection("top");
+        if (direction !== "bottom") {
+          setDirection("top");
+        }
         break;
       case 39:
-        setDirection("right");
+        if (direction !== "left") {
+          setDirection("right");
+        }
         break;
       case 40:
-        setDirection("bottom");
+        if (direction !== "top") {
+          setDirection("bottom");
+        }
         break;
       default:
         break;
@@ -107,41 +193,40 @@ const SnakeBoard = () => {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      {rows.map((row) => (
-        <div style={{ display: "flex", backgroundColor: "#435560" }}>
-          {row.map((e) => {
-            switch (e) {
-              case "blank":
-                return (
-                  <div
-                    style={{
-                      backgroundColor: "#435560",
-                      width: 30,
-                      height: 30,
-                    }}
-                  />
-                );
-              case "snake":
-                return <Snake />;
-              case "food":
-                return <Food />;
-            }
-          })}
-        </div>
-      ))}
-
-      <h1
-        style={{ fontFamily: "sans-serif" }}
-      >{`your score is:  ${snake.length}`}</h1>
-    </div>
+    <MainContainer>
+      <LeaderBoard>
+        {players.map((player, index) => {
+          return (
+            <PlayerInformationContainer
+              key={index}
+              style={{ display: "flex", flexDirection: "row" }}
+            >
+              <PlayerName>{player.name}</PlayerName>
+              <PlayerHighScore>{player["high-score"]}</PlayerHighScore>
+            </PlayerInformationContainer>
+          );
+        })}
+      </LeaderBoard>
+      <GameContainer>
+        {rows.map((row) => (
+          <div style={{ display: "flex", backgroundColor: "#435560" }}>
+            {row.map((e) => {
+              switch (e) {
+                case "blank":
+                  return <BlankBlock />;
+                case "snake":
+                  return <Snake />;
+                case "food":
+                  return <Food />;
+              }
+            })}
+          </div>
+        ))}
+        <h1
+          style={{ fontFamily: "sans-serif" }}
+        >{`your score is:  ${snake.length}`}</h1>
+      </GameContainer>
+    </MainContainer>
   );
 };
 
