@@ -75,15 +75,48 @@ const SnakeBoard = () => {
 
   const [rows, setRows] = useState(initialRows);
   const [snake, setSnake] = useState([
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
+    { x: 1, y: 1 },
+    { x: 2, y: 1 },
   ]);
-  const [direction, setDirection] = useState("right");
+  const [direction, setDirection] = useState();
   const [food, setFood] = useState(randomPosition);
   const [players, setPlayers] = useState([]);
   const [username, setUsername] = useState(
     localStorage.getItem("userNameUser")
   );
+
+  useEffect(() => {
+    snake.forEach((cell) => {
+      //check collision with walls
+      if (
+        snake[0].x > width - 1 ||
+        snake[0].y > height - 1 ||
+        snake[0].x < 0 ||
+        snake[0].y < 0
+      ) {
+        setSnake([
+          { x: 1, y: 1 },
+          { x: 2, y: 1 },
+        ]);
+
+        setDirection();
+      }
+      //check collision with its self
+    });
+
+    let arr = snake.filter(
+      (cell) => snake[0].x === cell.x && snake[0].y === cell.y
+    );
+
+    if (arr.length === 2) {
+      setSnake([
+        { x: 1, y: 1 },
+        { x: 2, y: 1 },
+      ]);
+
+      setDirection();
+    }
+  }, [snake]);
 
   useEffect(() => {
     if (!localStorage.getItem("userNameUser")) {
@@ -130,8 +163,6 @@ const SnakeBoard = () => {
           setDirection("bottom");
         }
         break;
-      default:
-        break;
     }
   };
 
@@ -145,34 +176,36 @@ const SnakeBoard = () => {
   };
 
   const moveSnake = () => {
-    const newSnake = [];
-    switch (direction) {
-      case "right":
-        newSnake.push({ x: snake[0].x, y: (snake[0].y + 1) % width });
-        break;
-      case "left":
-        newSnake.push({ x: snake[0].x, y: (snake[0].y - 1 + width) % width });
-        break;
-      case "top":
-        newSnake.push({ x: (snake[0].x - 1 + height) % height, y: snake[0].y });
-        break;
-      case "bottom":
-        newSnake.push({ x: (snake[0].x + 1) % height, y: snake[0].y });
-    }
-    snake.forEach((cell) => {
-      newSnake.push(cell);
-    });
+    if (direction) {
+      const newSnake = [];
+      switch (direction) {
+        case "right":
+          newSnake.push({ x: snake[0].x, y: snake[0].y + 1 });
+          break;
+        case "left":
+          newSnake.push({ x: snake[0].x, y: snake[0].y - 1 });
+          break;
+        case "top":
+          newSnake.push({ x: snake[0].x - 1, y: snake[0].y });
+          break;
+        case "bottom":
+          newSnake.push({ x: snake[0].x + 1, y: snake[0].y });
+      }
+      snake.forEach((cell) => {
+        newSnake.push(cell);
+      });
 
-    if (snake[0].x === food.x && snake[0].y === food.y) {
-      setFood(randomPosition);
-    } else {
-      newSnake.pop();
+      if (snake[0].x === food.x && snake[0].y === food.y) {
+        setFood(randomPosition);
+      } else {
+        newSnake.pop();
+      }
+      setSnake(newSnake);
     }
-    setSnake(newSnake);
     displaySnake();
   };
 
-  useInterval(moveSnake, 200);
+  useInterval(moveSnake, 150);
 
   function useInterval(callback, delay) {
     const savedCallback = useRef();
@@ -198,7 +231,7 @@ const SnakeBoard = () => {
         {players.map((player, index) => {
           return (
             <PlayerInformationContainer
-              key={index}
+              key={player}
               style={{ display: "flex", flexDirection: "row" }}
             >
               <PlayerName>{player.name}</PlayerName>
@@ -215,7 +248,7 @@ const SnakeBoard = () => {
                 case "blank":
                   return <BlankBlock />;
                 case "snake":
-                  return <Snake />;
+                  return <Snake color="#c8c6a7" />;
                 case "food":
                   return <Food />;
               }

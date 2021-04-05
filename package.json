@@ -3,11 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "express": "^4.17.1",
     "firebase": "^8.3.1",
+    "path": "^0.12.7",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-scripts": "3.2.0",
-    "styled-components": "^5.2.1"
+    "socket.io": "^4.0.1",
+    "socket.io-client": "^4.0.1",
+    "styled-components": "^5.2.1",
+    "websocket": "^1.0.33"
   },
   "scripts": {
     "start": "react-scripts start",
